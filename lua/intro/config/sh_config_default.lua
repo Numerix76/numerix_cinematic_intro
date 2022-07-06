@@ -4,10 +4,14 @@ Cinematic Intro made by Numerix (https://steamcommunity.com/id/numerix/)
 
 --------------------------------------------------------------------------------------------------]]
 
-Intro.Settings.VersionDefault = "1.0.5" --DON'T TOUCH THIS
+Intro.Settings.VersionDefault = "1.0.6" --DON'T TOUCH THIS
 
 --Change the language
 Intro.Settings.Language = "en"
+
+--If set to true, the addon will use the HTTP library from the game for running music. You will not being able to see the status of the conversion.
+--If set to false, the addon will need GWSocket (see : https://steamcommunity.com/sharedfiles/filedetails/?id=1989480899). You wiil be able to see the status of the conversion.
+Intro.Settings.DegradeMode = true
 
 --Command allowing the player to launch the intro when he wants (leave empty to desactivate)
 Intro.Settings.Commande = "/startintro"
@@ -21,9 +25,9 @@ Intro.Settings.Map["gm_construct"] = {
     Title = "Welcome on Name of Server", --Put a blur effect for the panel when the player joins the server?
     Blur = true, --Put a blur effect for the panel when the player joins the server?
     BGColor = Color(0,0,0,255), --Put a colored background for the panel when the player joins the server? (Intro.Settings.Blur must be false)
-    AlwaysShow = false, --Display the menu when the player joins the server each time or no longer display it when he has seen the intro at least once?
+    AlwaysShow = true, --Display the menu when the player joins the server each time or no longer display it when he has seen the intro at least once?
     ForceIntro = false, --Remove the "Skip introduction" button ?
-    URLMusic = "https://gmod-radio-numerix.mtxserv.com/exemple/Calvin%20Harris%20-%20Summer.mp3", --Music link (Youtube, Soundcloud or mp3)
+    URLMusic = "https://www.youtube.com/watch?v=hcEnxgwZr7w&list=RDMM&index=27", --Music link (Youtube, Soundcloud or mp3)
     PlayVideo = false, --Should we play a video youtube instead of using camera
     MusicVolume = 0.3, --Music volume (between 0 and 1)
     AnimReturnPlayer = true, --Return to the player once the intro is finished?

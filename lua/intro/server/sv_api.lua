@@ -4,16 +4,22 @@ Cinematic Intro made by Numerix (https://steamcommunity.com/id/numerix/)
 
 --------------------------------------------------------------------------------------------------]]
 
-local gwsocketsExist = file.Exists("bin/gmsv_gwsockets_*.dll", "LUA")
-
-if gwsocketsExist then
-	require("gwsockets")
+local forceDegradeMode = false
+if !Intro.Settings.DegradeMode then
+	xpcall(require, 
+		function(err)
+			MsgC( Color( 225, 20, 30 ), "[Cinematic Intro]", Color(255,255,255), " Passing into a degraded mode.\n")
+			Intro.Settings.DegradeMode = true
+			forceDegradeMode = true
+		end,
+		"gwsockets"
+	)
 end
 
 hook.Add("PlayerInitialSpawn", "Intro:PlayerInitialSpawnCheckGWSocket", function(ply)
 	if ply:IsSuperAdmin() then
 		timer.Simple(10, function()
-			if !gwsocketsExist then
+			if forceDegradeMode then
 				ply:IntroChatInfo(Intro.GetLanguage("The module GWSocket is not present on the server"), 3)
 			end
 
@@ -29,38 +35,8 @@ local function printInfo(message)
 	MsgC( Color( 225, 20, 30 ), "[Cinematic Intro] ", Color(255,255,255), message.."\n" )
 end
 
-local ensFunctions
+local ensFunctions, ensFunctionsDegrade
 local socket
-function Intro.Setup()
-	if Intro.isloading or Intro.setup_success then return end
-
-	Intro.isloading = true
-
-	printInfo(Intro.GetLanguage("Connection to the backend"))
-
-	socket = GWSockets.createWebSocket( "ws://92.222.234.121:3000/get/" .. (Intro.Settings.Map[game.GetMap()].PlayVideo and "webm" or "mp3") )
-
-	function socket:onMessage(txt)
-		local data = util.JSONToTable(txt)
-
-		ensFunctions[data.type](data)
-	end
-	
-	function socket:onError(txt)
-		error({message = txt})
-		Intro.isloading = false
-	end
-	
-	function socket:onConnected()
-		socket:write(Intro.Settings.Map[game.GetMap()].URLMusic)
-	end
-	
-	function socket:onDisconnected()
-		Intro.isloading = false
-	end
-
-	socket:open()
-end
 
 local function infos_music(data)
 	Intro.Duration = data.duration
@@ -101,7 +77,7 @@ local function finished(data)
 	printInfo( Intro.GetLanguage("Is ready to be used") )
 end
 
-local function error(data)
+local function errorIntro(data)
 	if socket then
 		socket:close()
 	end
@@ -110,6 +86,69 @@ local function error(data)
 
 	if ( data.log ) then
 		printInfo( Intro.GetLanguage("Logs") .. " : " .. data.log)
+	end
+end
+
+local function connectWebsite()
+	printInfo(Intro.GetLanguage("Connection to the backend"))
+	
+	http.Fetch("http://92.222.234.121:3000/get/".. (Intro.Settings.Map[game.GetMap()].PlayVideo and "webm" or "mp3") .."/degrade", 
+		function(body)
+			for _, data in pairs(util.JSONToTable(body)) do
+				if ensFunctionsDegrade[data.type] then
+					ensFunctionsDegrade[data.type](data)
+				end
+			end
+
+			Intro.isloading = false
+		end,
+		function(errorMessage)
+			errorIntro({message = string.format(Intro.GetLanguage("Can't connect to the backend or the conversion take too long. (%s)"), errorMessage) })
+			Intro.isloading = false
+		end,
+
+		{url = Intro.Settings.Map[game.GetMap()].URLMusic}
+	)
+end
+
+local function connectWebsocket()
+	printInfo(Intro.GetLanguage("Connection to the backend"))
+
+	socket = GWSockets.createWebSocket( "ws://92.222.234.121:3000/get/" .. (Intro.Settings.Map[game.GetMap()].PlayVideo and "webm" or "mp3") )
+
+	function socket:onMessage(txt)
+		local data = util.JSONToTable(txt)
+
+		if ensFunctions[data.type] then
+			ensFunctions[data.type](data)
+		end
+	end
+	
+	function socket:onError(txt)
+		errorIntro({message = txt})
+		Intro.isloading = false
+	end
+	
+	function socket:onConnected()
+		socket:write(Intro.Settings.Map[game.GetMap()].URLMusic)
+	end
+	
+	function socket:onDisconnected()
+		Intro.isloading = false
+	end
+
+	socket:open()
+end
+
+function Intro.Setup()
+	if Intro.isloading or Intro.setup_success then return end
+
+	Intro.isloading = true
+
+	if ( Intro.Settings.DegradeMode ) then
+		connectWebsite()
+	else
+		connectWebsocket()
 	end
 end
 
@@ -123,5 +162,11 @@ ensFunctions = {
 	["conversion_progress"] = conversion_progress,
 	["conversion_finished"] = conversion_finished,
 	["finished"] = finished,
-	["error"] = error,
+	["error"] = errorIntro,
+}
+
+ensFunctionsDegrade = {
+	["infos_music"] = infos_music,
+	["finished"] = finished,
+	["error"] = errorIntro,
 }

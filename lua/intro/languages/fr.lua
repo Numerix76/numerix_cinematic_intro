@@ -38,6 +38,10 @@ Intro.Language["fr"] = {
 	["Failed to setup the addon please check the server console for more information."] = "Echec du lancement de l'addon. Regardez la console du serveur pour plus d'informations",
 	["The addon is not ready actually. Please retry later."] = "L'addon n'est pas encore prêt. Veuillez réessayer plus tard.",
 
+	--1.0.6
+	["Can't connect to the backend or the conversion take too long. (%s)"] = "Impossible de se connecter au backend ou la conversion à été trop longue (%s)",
+	["Conversion on the backend (this can take some time)"] = "Conversion sur le backend (cela peut prendre un peu de temps)",
+
 	["A new version of the config file is available. Please download it."] = "Une nouvelle version du fichier de configuration est disponible. Veuillez le télécharger.",
 	["A new version of the language file is available. Please download it."] = "Une nouvelle version du fichier de langue est disponible. Veuillez le télécharger.",
 	["A new version of the addon is available. Please download it."] = "Une nouvelle version de l'addon est disponible. Veuillez le télécharger.",
