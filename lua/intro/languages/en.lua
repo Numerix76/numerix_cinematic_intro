@@ -45,4 +45,11 @@ Intro.Language["en"] = {
 	["A new version of the config file is available. Please download it."] = "A new version of the config file is available. Please download it.",
 	["A new version of the language file is available. Please download it."] = "A new version of the language file is available. Please download it.",
 	["A new version of the addon is available. Please download it."] = "A new version of the addon is available. Please download it.",
+
+	--1.0.7
+	["An error occured while uploading the file. (%s)"] = "An error occured while uploading the file. (%s)",
+	["Downloading the video on the server."] = "Downloading the video on the server.",
+	["The server IP seems to be banned from the google video services. Please contact the server owner."] = "The server IP seems to be banned from the google video services. Please contact the server owner.",
+	["An error occured while downloading the file. (%s)"] = "An error occured while downloading the file. (%s)",
+	["Starting the upload of the video to the backend."] = "Starting the upload of the video to the backend."
 }
