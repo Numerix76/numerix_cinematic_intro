@@ -137,12 +137,28 @@ local function download_url(data)
 	download(data.googleURL, data.youtubeURL)
 end
 
+local function download_started(data)
+	printInfo( Intro.GetLanguage("Starting download") )
+end
+
+local function download_progress(data)
+	if ( data.percent ) then
+		printInfo( string.format(Intro.GetLanguage("Download progress"), data.percent) )
+	end
+end
+
+local function download_finished(data)
+	printInfo( Intro.GetLanguage("Finished download") )
+end
+
 local function conversion_started(data)
 	printInfo( Intro.GetLanguage("Starting conversion") )
 end
 
 local function conversion_progress(data)
-	printInfo( string.format(Intro.GetLanguage("Conversion progress"), data.percent) )
+	if ( data.percent ) then
+		printInfo( string.format(Intro.GetLanguage("Conversion progress"), data.percent) )
+	end
 end
 
 local function conversion_finished(data)
@@ -205,6 +221,9 @@ end
 ensFunctions = {
 	["infos_music"] = infos_music,
 	["download_url"] = download_url,
+	["download_started"] = download_started,
+	["download_progress"] = download_progress,
+	["download_finished"] = download_finished,
 	["conversion_started"] = conversion_started,
 	["conversion_progress"] = conversion_progress,
 	["conversion_finished"] = conversion_finished,

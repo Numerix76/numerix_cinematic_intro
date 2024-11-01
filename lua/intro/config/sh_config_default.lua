@@ -11,7 +11,7 @@ Intro.Settings.Language = "en"
 
 --If set to true, the addon will use the HTTP library from the game for running music. You will not being able to see the status of the conversion.
 --If set to false, the addon will need GWSocket (see : https://steamcommunity.com/sharedfiles/filedetails/?id=1989480899). You wiil be able to see the status of the conversion.
-Intro.Settings.DegradeMode = true
+Intro.Settings.DegradeMode = false
 
 --Command allowing the player to launch the intro when he wants (leave empty to desactivate)
 Intro.Settings.Commande = "/startintro"
