@@ -26,23 +26,34 @@ function Intro.StopMusic()
 end
 
 function Intro.PlayVideo(url, duration)
+    local exactDuration = nil
+
     Intro.frame = vgui.Create("DHTML")
     Intro.frame:SetPos(0,0)
     Intro.frame:SetSize(ScrW(), ScrH())
     Intro.frame:OpenURL("http://92.222.234.121/video/?url="..url)
     Intro.frame:AddFunction("console", "time", function(str)
-        if math.Round(tonumber(str)) >= duration then
+        local curTime = tonumber(str)
+        local durationToCompare = exactDuration or duration
+
+        if curTime >= durationToCompare then
             Intro.StopVideo()
-        end   
+        end
+    end)
+    Intro.frame:AddFunction("console", "duration", function(str)
+        exactDuration = tonumber(str)
     end)
     Intro.frame:SetAllowLua( true )
-    Intro.frame:RunJavascript("vid.volume = "..Intro.Informations.MusicVolume)
     Intro.frame.Think = function()
         if input.IsKeyDown(Intro.Settings.ExitKey) then
             Intro.StopVideo()
         end
 
-        Intro.frame:RunJavascript("console.time(vid.currentTime);")
+        Intro.frame:RunJavascript("console.time(document.getElementById('video').currentTime);")
+    end
+    Intro.frame.OnDocumentReady = function()
+        Intro.frame:RunJavascript("document.getElementById('video').volume = "..Intro.Informations.MusicVolume)
+        Intro.frame:RunJavascript("console.duration(document.getElementById('video').duration)")
     end
 end
 
