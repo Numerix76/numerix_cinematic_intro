@@ -1,0 +1,12 @@
+{
+"title" : "Cinematic Intro",
+"type" : "ServerContent",
+"tags" : "roleplay",
+"description" : "",
+"ignore" :
+[
+"*.psd",
+"*.vcproj",
+"*.svn"
+]
+}

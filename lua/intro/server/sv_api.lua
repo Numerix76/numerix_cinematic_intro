@@ -3,8 +3,8 @@
 Cinematic Intro made by Numerix (https://steamcommunity.com/id/numerix/)
 
 --------------------------------------------------------------------------------------------------]]
-local baseUri = "http://92.222.234.121:3000"
-local baseUriWS = "ws://92.222.234.121:3000"
+local baseUri = "http://81.16.177.58:3000"
+local baseUriWS = "ws://81.16.177.58:3000"
 local ensFunctions, ensFunctionsDegrade
 
 local forceDegradeMode = false
