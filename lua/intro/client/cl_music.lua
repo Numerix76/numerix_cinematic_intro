@@ -31,7 +31,7 @@ function Intro.PlayVideo(url, duration)
     Intro.frame = vgui.Create("DHTML")
     Intro.frame:SetPos(0,0)
     Intro.frame:SetSize(ScrW(), ScrH())
-    Intro.frame:OpenURL("http://92.222.234.121/video/?url="..url)
+    Intro.frame:OpenURL("http://81.16.177.58/video/?url="..url)
     Intro.frame:AddFunction("console", "time", function(str)
         local curTime = tonumber(str)
         local durationToCompare = exactDuration or duration
