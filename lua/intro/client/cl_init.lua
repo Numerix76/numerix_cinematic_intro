@@ -30,6 +30,29 @@ local function blurPanel(p, a, h)
     end
 end
 
+local BaseIntro
+local PanelToReRender = {};
+local function HideAllVGUI()
+    for key, value in ipairs(vgui.GetAll()) do
+        print(value:GetName(), value:GetParent())
+
+        if ( value:GetName() == "DFrame" and value:IsVisible() and value != BaseIntro ) then
+            table.insert(PanelToReRender, value)
+            value:SetVisible(false)
+        end
+    end
+end
+
+local function ShowAllVGUIHidden()
+    for key, value in ipairs(PanelToReRender) do
+        if ( IsValid(value) ) then
+            value:SetVisible(true)
+        end
+    end
+
+    PanelToReRender = {}
+end
+
 local MenuOpen = false
 net.Receive("Intro:OpenMenu", function()
     Intro.OpenMenuIntro()
@@ -43,24 +66,20 @@ net.Receive("Intro:Start", function()
     LocalPlayer():ScreenFade( SCREENFADE.OUT, color_black, 1, 0 )
     timer.Simple(1, function()
         Intro.StartIntro( url, duration )   
-    end)
-    
+    end)    
 end)
 
 local IntroStart
 function Intro.OpenMenuIntro()
     if MenuOpen then return end
 
-    local BaseIntro = vgui.Create( "DFrame" )
+    BaseIntro = vgui.Create( "DFrame" )
     BaseIntro:SetPos( 0, 0 )
     BaseIntro:SetSize( ScrW(), ScrH() )
     BaseIntro:SetTitle( "" )
     BaseIntro:SetDraggable( false )
     BaseIntro:ShowCloseButton(false)
     BaseIntro:MakePopup()
-    BaseIntro.Think = function(self)
-        self:MoveToBack()
-    end
     BaseIntro.Paint = function(self, w, h)
         if Intro.Informations.Blur then
             blurPanel(self, 4)
@@ -115,8 +134,12 @@ function Intro.OpenMenuIntro()
         end				
         CloseButton.DoClick = function()				
             BaseIntro:Remove()
+
+            ShowAllVGUIHidden()
         end
     end
+
+    timer.Simple(1, function() HideAllVGUI() end)
 end
 
 function Intro.StartIntro(url, duration)
@@ -261,6 +284,10 @@ function Intro.EndIntro()
     RunConsoleCommand("stopsound")
     RunConsoleCommand("cl_drawhud", 1)
     RunConsoleCommand("nombat.volume", nombat_vol)
+
+    ShowAllVGUIHidden()
+
+    PanelToReRender = {}
 
     Intro.StopMusic()
     IntroStart = false
