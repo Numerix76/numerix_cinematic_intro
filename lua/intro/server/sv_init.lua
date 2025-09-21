@@ -56,25 +56,9 @@ function Intro.StartIntro(ply, command)
     end
 
     if !ply.InIntro then
-        
         ply.InIntro = true
-        
-        ply.FreezeProps = ents.Create( "prop_physics" )
-        if ( !IsValid( ply.FreezeProps ) ) then return end
-        ply.FreezeProps:SetModel( "models/props_wasteland/laundry_dryer001.mdl" )
-        ply.FreezeProps:SetPos( ply:GetPos() + Vector(0,0,50))
-        ply.FreezeProps:Spawn()
-        ply.FreezeProps:PhysicsDestroy()
-        ply.FreezeProps:SetNoDraw( true )
 
-        ply:GodEnable()
-
-        ply.Weapons = {}
-        
-        for k, v in pairs(ply:GetWeapons()) do
-            table.insert(ply.Weapons, v:GetClass())
-            ply:StripWeapon(v:GetClass())
-        end
+        ply:Lock()
     
         net.Start("Intro:Start")
         net.WriteString(Intro.URL)
@@ -84,20 +68,10 @@ function Intro.StartIntro(ply, command)
 end
 
 function Intro.StopIntro(ply)
-    if ply.InIntro then
-
-        for k, v in pairs(ply.Weapons) do
-            ply:Give(v)
-        end
-        
+    if ply.InIntro then        
         ply.InIntro = false
 
-        if IsValid(ply.FreezeProps) then
-            ply.FreezeProps:Remove()
-            ply.FreezeProps = nil
-        end
-
-        ply:GodDisable()
+        ply:UnLock()
 
         if not file.Exists("numerix_intro/"..game.GetMap().."/player/"..ply:SteamID64()..".txt", "DATA") then
             file.Write("numerix_intro/"..game.GetMap().."/player/"..ply:SteamID64()..".txt", "true")
@@ -107,11 +81,4 @@ end
 
 hook.Add("CanPlayerSuicide", "CanPlayerSuicide:DisableSuicideInIntro", function(ply)
     if ply.InIntro then return false end
-end)
-
-hook.Add("PlayerDisconnected", "Intro:PlayerDisconnected", function(ply)
-    if IsValid(ply.FreezeProps) then
-        ply.FreezeProps:Remove()
-        ply.FreezeProps = nil
-    end
 end)
