@@ -62,5 +62,6 @@ function Intro.StopVideo()
         Intro.frame:Remove()
     end
 
-    Intro.EndIntro()
+    net.Start("Intro:AskForStop")
+    net.SendToServer()
 end
