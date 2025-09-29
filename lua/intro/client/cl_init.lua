@@ -12,8 +12,6 @@ local color_hover = Color(0, 0, 0, 100)
 
 local color_text = Color(255,255,255,255)
 
-local nombat_vol
-
 Intro.Informations = Intro.Settings.Map[game.GetMap()]
 
 local blur = Material("pp/blurscreen")
@@ -139,6 +137,7 @@ function Intro.OpenMenuIntro()
     timer.Create("Intro:HideAllVGUI", 0.1, 0, function() HideAllVGUI() end)
 end
 
+local nombat_vol
 net.Receive("Intro:Start", function()
     local url      = net.ReadString()
     local duration = net.ReadUInt(16)
@@ -207,9 +206,6 @@ net.Receive("Intro:Stop", function()
     RunConsoleCommand("nombat.volume", nombat_vol)
 
     ShowAllVGUIHidden()
-
-    PanelToReRender = {}
-
     Intro.StopMusic()
 
     hook.Call("OnIntroStop", nil, LocalPlayer())
