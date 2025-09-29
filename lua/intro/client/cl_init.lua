@@ -143,7 +143,9 @@ net.Receive("Intro:Start", function()
     local url      = net.ReadString()
     local duration = net.ReadUInt(16)
 
-    hook.Remove( "CalcView", "zzzzzzzNumerix_CalcView_Intro" )
+    HideAllVGUI()
+
+    hook.Remove( "CalcView", "Intro:CalcView" )
     hook.Remove( "DrawOverlay", "Intro:DrawOverlay" )
     hook.Remove( "HUDShouldDraw", "Intro:HUDShouldDraw" )
 
