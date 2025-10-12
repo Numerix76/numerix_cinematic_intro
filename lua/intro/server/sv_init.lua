@@ -6,8 +6,10 @@ Cinematic Intro made by Numerix (https://steamcommunity.com/id/numerix/)
 
 util.AddNetworkString("Intro:OpenMenu")
 util.AddNetworkString("Intro:Start")
+util.AddNetworkString("Intro:Stop")
 util.AddNetworkString("Intro:StartWithMenu")
-util.AddNetworkString("Intro:StartandStop")
+util.AddNetworkString("Intro:AskForStart")
+util.AddNetworkString("Intro:AskForStop")
 
 hook.Add("PlayerConnect", "Intro:PlayerConnect:Setup", function(ply)
     if Intro.Settings.Map[game.GetMap()] then
@@ -25,7 +27,7 @@ end)
 hook.Add("PlayerSay", "Intro:PlayerSay", function(ply, text)
     if Intro.Settings.Map[game.GetMap()] and string.sub(text, 1, string.len(Intro.Settings.Commande)) == Intro.Settings.Commande and Intro.Settings.Commande != "" then
         if ply:Alive() then
-            Intro.StartIntro(ply, true)
+            Intro.StartIntro(ply)
         end
         return ""
     end
@@ -37,81 +39,84 @@ net.Receive("Intro:StartWithMenu", function(len, ply)
     end
 end)
 
-net.Receive("Intro:StartandStop", function(len, ply)
-    local start = net.ReadBool()
-    
+net.Receive("Intro:AskForStart", function(len, ply)    
     if ply:IsValid() and ply:Alive() then
-        if start then
-            Intro.StartIntro(ply, false) 
-        else
-            Intro.StopIntro(ply)
-        end
+        Intro.StartIntro(ply) 
     end
 end)
 
-function Intro.StartIntro(ply, command)
+net.Receive("Intro:AskForStop", function(len, ply)    
+    if ply:IsValid() and ply:Alive() then
+        Intro.StopIntro(ply)
+    end
+end)
+
+function Intro.StartIntro(ply)
+    if ( !IsValid(ply) ) then
+        return
+    end
+
     if !Intro.setup_success then
         ply:IntroChatInfo(Intro.GetLanguage("The addon is not ready actually. Please retry later."), 3)
         return
     end
 
-    if !ply.InIntro then
-        
-        ply.InIntro = true
-        
-        ply.FreezeProps = ents.Create( "prop_physics" )
-        if ( !IsValid( ply.FreezeProps ) ) then return end
-        ply.FreezeProps:SetModel( "models/props_wasteland/laundry_dryer001.mdl" )
-        ply.FreezeProps:SetPos( ply:GetPos() + Vector(0,0,50))
-        ply.FreezeProps:Spawn()
-        ply.FreezeProps:PhysicsDestroy()
-        ply.FreezeProps:SetNoDraw( true )
+    if ( ply.InIntro ) then
+        return
+    end
 
-        ply:GodEnable()
+    ply.InIntro = true
 
-        ply.Weapons = {}
+    ply:Lock()
+
+    ply:ScreenFade( SCREENFADE.OUT, color_black, 1, 0 )
         
-        for k, v in pairs(ply:GetWeapons()) do
-            table.insert(ply.Weapons, v:GetClass())
-            ply:StripWeapon(v:GetClass())
-        end
-    
+    timer.Simple(0.9, function()
+        ply:ScreenFade( SCREENFADE.IN, color_black, 5, 0 )
+
         net.Start("Intro:Start")
         net.WriteString(Intro.URL)
         net.WriteUInt(Intro.Duration or 0, 16)
         net.Send(ply)
-    end
+
+        hook.Call("OnIntroStart", nil, ply)
+
+        if ( !Intro.Settings.Map[game.GetMap()].PlayVideo ) then
+            ply.ViewPointEnt = ents.Create("numerix_intro_camera")
+            ply.ViewPointEnt:SetPos(Intro.Settings.Map[game.GetMap()].Camera[1].startpos)
+            ply.ViewPointEnt:SetAngles(Intro.Settings.Map[game.GetMap()].Camera[1].startang)
+            ply.ViewPointEnt:Spawn()
+
+            ply.ViewPointEnt:SetPlayer(ply)
+        end
+    end)
 end
 
 function Intro.StopIntro(ply)
-    if ply.InIntro then
+    if ( !ply.InIntro ) then
+        return
+    end
+       
+    ply.InIntro = false
 
-        for k, v in pairs(ply.Weapons) do
-            ply:Give(v)
-        end
-        
-        ply.InIntro = false
+    ply:UnLock()
 
-        if IsValid(ply.FreezeProps) then
-            ply.FreezeProps:Remove()
-            ply.FreezeProps = nil
-        end
+    if ( IsValid(ply.ViewPointEnt) ) then
+        ply.ViewPointEnt:Remove()
+    end
 
-        ply:GodDisable()
+    ply.ViewPointEnt = nil
 
-        if not file.Exists("numerix_intro/"..game.GetMap().."/player/"..ply:SteamID64()..".txt", "DATA") then
-            file.Write("numerix_intro/"..game.GetMap().."/player/"..ply:SteamID64()..".txt", "true")
-        end
+    net.Start("Intro:Stop")
+    net.Send(ply)
+
+    hook.Call("OnIntroStop", nil, ply)
+
+    if not file.Exists("numerix_intro/"..game.GetMap().."/player/"..ply:SteamID64()..".txt", "DATA") then
+        file.Write("numerix_intro/"..game.GetMap().."/player/"..ply:SteamID64()..".txt", "true")
     end
 end
 
 hook.Add("CanPlayerSuicide", "CanPlayerSuicide:DisableSuicideInIntro", function(ply)
     if ply.InIntro then return false end
-end)
-
-hook.Add("PlayerDisconnected", "Intro:PlayerDisconnected", function(ply)
-    if IsValid(ply.FreezeProps) then
-        ply.FreezeProps:Remove()
-        ply.FreezeProps = nil
-    end
 end)

@@ -12,8 +12,6 @@ local color_hover = Color(0, 0, 0, 100)
 
 local color_text = Color(255,255,255,255)
 
-local nombat_vol
-
 Intro.Informations = Intro.Settings.Map[game.GetMap()]
 
 local blur = Material("pp/blurscreen")
@@ -34,8 +32,6 @@ local BaseIntro
 local PanelToReRender = {};
 local function HideAllVGUI()
     for key, value in ipairs(vgui.GetAll()) do
-        print(value:GetName(), value:GetParent())
-
         if ( value:GetName() == "DFrame" and value:IsVisible() and value != BaseIntro ) then
             table.insert(PanelToReRender, value)
             value:SetVisible(false)
@@ -44,6 +40,10 @@ local function HideAllVGUI()
 end
 
 local function ShowAllVGUIHidden()
+    if ( timer.Exists("Intro:HideAllVGUI") ) then
+        timer.Remove("Intro:HideAllVGUI")
+    end
+
     for key, value in ipairs(PanelToReRender) do
         if ( IsValid(value) ) then
             value:SetVisible(true)
@@ -63,13 +63,9 @@ net.Receive("Intro:Start", function()
     local url      = net.ReadString()
     local duration = net.ReadUInt(16)
 
-    LocalPlayer():ScreenFade( SCREENFADE.OUT, color_black, 1, 0 )
-    timer.Simple(1, function()
-        Intro.StartIntro( url, duration )   
-    end)    
+    Intro.StartIntro(url, duration)
 end)
 
-local IntroStart
 function Intro.OpenMenuIntro()
     if MenuOpen then return end
 
@@ -107,8 +103,7 @@ function Intro.OpenMenuIntro()
 		end	
     end
     StartButton.DoClick = function()
-        net.Start("Intro:StartandStop")
-        net.WriteBool(true)
+        net.Start("Intro:AskForStart")
         net.SendToServer()
 
         BaseIntro:Remove()
@@ -139,159 +134,82 @@ function Intro.OpenMenuIntro()
         end
     end
 
-    timer.Simple(1, function() HideAllVGUI() end)
+    timer.Create("Intro:HideAllVGUI", 0.1, 0, function() HideAllVGUI() end)
 end
 
-function Intro.StartIntro(url, duration)
-    if !IntroStart then
+local nombat_vol
+net.Receive("Intro:Start", function()
+    local url      = net.ReadString()
+    local duration = net.ReadUInt(16)
 
-        hook.Remove( "CalcView", "zzzzzzzNumerix_CalcView_Intro" )
-        hook.Remove( "DrawOverlay", "Intro:DrawOverlay" )
-        hook.Remove( "HUDShouldDraw", "Intro:HUDShouldDraw" )
-        
-        IntroStart = true
-        
-        RunConsoleCommand("cl_drawhud", 0)
-        RunConsoleCommand("simple_thirdperson_enabled", 0)
-        
-        nombat_vol = GetConVar("nombat.volume") and GetConVar("nombat.volume"):GetInt() or 50
-        RunConsoleCommand("nombat.volume", 0)
+    HideAllVGUI()
 
-        if Intro.Informations.PlayVideo then
-            Intro.PlayVideo(url, duration)
-            return
-        else
-            Intro.PlayMusic(url)
-        end
-        
-        --if Intro.Informations.PlayVideo then return end
-
-        LocalPlayer():ScreenFade( SCREENFADE.IN, color_black, 5, 0 )
-
-        local scene = 1
-        local fraction = 0
-        local returntoply = false
-        local fadeout = false
-        local fadein = false
-        local finalscene = false
-        local showtext = true
-        hook.Add("CalcView", "zzzzzzzNumerix_CalcView_Intro", function(ply, pos, angles, fov)
-
-            if input.IsKeyDown(Intro.Settings.ExitKey) then
-                Intro.EndIntro()
-            end
-            
-            if scene <= #Intro.Informations.Camera then
-                
-                fraction = math.Clamp(fraction + FrameTime()*Intro.Informations.Camera[scene].speed, 0, 1)
-                if fraction == 0 then return end
-                
-                local view = {}
-                view.origin = LerpVector( fraction, Intro.Informations.Camera[scene].startpos, Intro.Informations.Camera[scene].endpos )
-                view.angles = LerpAngle(fraction, Intro.Informations.Camera[scene].startang, Intro.Informations.Camera[scene].endang)
-                view.fov = fov
-                view.drawviewer = true
-
-                local totaldist = Intro.Informations.Camera[scene].startpos:Distance(Intro.Informations.Camera[scene].endpos)
-                local actualdist = view.origin:Distance(Intro.Informations.Camera[scene].endpos)
-                
-                if actualdist < totaldist/2.5*Intro.Informations.Camera[scene].speed/0.2 and !fadeout and Intro.Informations.Camera[scene].makefade then
-                    if scene < #Intro.Informations.Camera and !finalscene then
-                        ply:ScreenFade( SCREENFADE.OUT, color_black, 1, 1 )
-                        fadeout = true
-
-                        timer.Simple(1, function()
-                            showtext = false
-                        end)
-
-                        timer.Simple(2, function() 
-                            fadeout = false
-                        end)
-                    end
-                end
-                if view.origin:IsEqualTol( Intro.Informations.Camera[scene].endpos, 5 ) then
-                    fraction = 0
-
-                    if scene <= #Intro.Informations.Camera then
-                        if !fadein and Intro.Informations.Camera[scene].makefade then
-                            ply:ScreenFade( SCREENFADE.IN, color_black, 2, 0 )
-                            fadein = true
-                            showtext = true
-                            
-                            timer.Simple(2, function() 
-                                fadein = false
-                            end)
-                        end
-                    end
-
-                    scene = scene + 1
-                end
-
-                return view
-            elseif !returntoply and Intro.Informations.AnimReturnPlayer then
-                finalscene = true
-                fraction = math.Clamp(fraction + FrameTime()*0.3, 0, 1)
-                
-                local ang = ply:GetAngles()
-                local view = {}
-                view.origin = LerpVector( fraction, ply:GetPos() + Vector(0, 0, Intro.Informations.AnimReturnPlayerHigh), ply:GetPos() + Vector(0,0, 100) )
-                view.angles = Angle(90,ang.yaw,ang.raw)
-                view.fov = fov
-                view.drawviewer = true
-                
-                if view.origin:IsEqualTol( ply:GetPos() + Vector(0,0,100), 5 ) then
-                    returntoply = true
-                end
-                
-                return view
-            else
-                Intro.EndIntro()
-            end
-        end)
-
-        local text
-        hook.Add("DrawOverlay", "Intro:DrawOverlay", function() --aa to be the first HUD executed
-            draw.RoundedBox(0, 0, 0, ScrW(), Intro.Informations.BlackStripTall(), color_black)
-            draw.RoundedBox(0, 0, ScrH() - Intro.Informations.BlackStripTall(), ScrW(), Intro.Informations.BlackStripTall(), color_black)
-
-            if showtext then
-                if scene <= #Intro.Informations.Camera then
-                    text =  Intro.Informations.Camera[scene].text
-                else
-                    text = Intro.Informations.textend
-                end
-
-                Intro.Informations.HUD(text)
-            end
-            return false
-        end)
-        
-        hook.Add( "HUDShouldDraw", "Intro:HUDShouldDraw", function(name)    
-            return false
-        end)
-    end
-end
-
-function Intro.EndIntro()
-    hook.Remove( "CalcView", "zzzzzzzNumerix_CalcView_Intro" )
+    hook.Remove( "CalcView", "Intro:CalcView" )
     hook.Remove( "DrawOverlay", "Intro:DrawOverlay" )
     hook.Remove( "HUDShouldDraw", "Intro:HUDShouldDraw" )
 
-    net.Start("Intro:StartandStop")
-    net.WriteBool(false)
-    net.SendToServer()
+    RunConsoleCommand("cl_drawhud", 0)
+    RunConsoleCommand("simple_thirdperson_enabled", 0)
+    
+    nombat_vol = GetConVar("nombat.volume") and GetConVar("nombat.volume"):GetInt() or 50
+    RunConsoleCommand("nombat.volume", 0)
+
+    if Intro.Informations.PlayVideo then
+        Intro.PlayVideo(url, duration)
+        return
+    else
+        Intro.PlayMusic(url)
+    end
+
+    hook.Add("CalcView", "Intro:CalcView", function(ply, pos, angles, fov)
+        if input.IsKeyDown(Intro.Settings.ExitKey) then
+            net.Start("Intro:AskForStop")
+            net.SendToServer()
+        end
+    end)
+
+    hook.Add("DrawOverlay", "Intro:DrawOverlay", function()
+        draw.RoundedBox(0, 0, 0, ScrW(), Intro.Informations.BlackStripTall(), color_black)
+        draw.RoundedBox(0, 0, ScrH() - Intro.Informations.BlackStripTall(), ScrW(), Intro.Informations.BlackStripTall(), color_black)
+
+        local ent = LocalPlayer():GetViewEntity()
+        if ( !IsValid(ent) or ent:GetClass() != 'numerix_intro_camera' ) then
+            return
+        end
+
+        local scene = ent:GetCurrentScene()
+        if ( scene == nil ) then
+            return
+        end
+
+        if ( ent:GetNWBool("showText", true) ) then
+            Intro.Informations.HUD(scene.text)
+        end
+
+        return false
+    end)
+    
+    hook.Add( "HUDShouldDraw", "Intro:HUDShouldDraw", function(name)    
+        return false
+    end)
+
+    hook.Call("OnIntroStart", nil, LocalPlayer())
+end)
+
+net.Receive("Intro:Stop", function()
+    hook.Remove( "CalcView", "Intro:CalcView" )
+    hook.Remove( "DrawOverlay", "Intro:DrawOverlay" )
+    hook.Remove( "HUDShouldDraw", "Intro:HUDShouldDraw" )
 
     RunConsoleCommand("stopsound")
     RunConsoleCommand("cl_drawhud", 1)
     RunConsoleCommand("nombat.volume", nombat_vol)
 
     ShowAllVGUIHidden()
-
-    PanelToReRender = {}
-
     Intro.StopMusic()
-    IntroStart = false
-end
+
+    hook.Call("OnIntroStop", nil, LocalPlayer())
+end)
 
 concommand.Add("numerix_addcampos", function(ply)
     if !ply.SecondCommmand then
