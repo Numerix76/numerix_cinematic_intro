@@ -12,7 +12,7 @@ Intro.Settings.Map = Intro.Settings.Map or {}
 
 local FileSystem = "intro"
 local AddonName = "Cinematic Intro"
-local Version  = "1.3.3"
+local Version  = "2.0.0"
 local FromWorshop = false
 
 if SERVER then
