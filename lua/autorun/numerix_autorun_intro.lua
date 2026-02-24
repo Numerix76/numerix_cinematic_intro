@@ -12,7 +12,7 @@ Intro.Settings.Map = Intro.Settings.Map or {}
 
 local FileSystem = "intro"
 local AddonName = "Cinematic Intro"
-local Version  = "2.0.0"
+local Version  = "2.0.1"
 local FromWorshop = false
 
 if SERVER then
@@ -68,18 +68,6 @@ if SERVER then
     end
 
     hook.Add("PlayerConnect", "Intro:Connect", function()
-        if !game.SinglePlayer() then
-            http.Post("https://gmod-radio-numerix.mtxserv.com/api/connect.php", { script = FileSystem, ip = game.GetIPAddress() }, 
-            function(result)
-                if result then 
-                    MsgC( Color( 225, 20, 30 ), "["..AddonName.."]", Color(255,255,255), " Connection established\n") 
-                end
-            end, 
-            function(failed)
-                MsgC( Color( 225, 20, 30 ), "["..AddonName.."]", Color(255,255,255), " Connection failed : "..failed.."\n")
-            end)
-        end
-
         if !FromWorshop then
             http.Fetch( "https://gmod-radio-numerix.mtxserv.com/api/version/"..FileSystem..".txt",
                 function( body, len, headers, code )
@@ -100,20 +88,6 @@ if SERVER then
         end
 
         hook.Remove("PlayerConnect", "Intro:Connect")
-    end)
-
-    hook.Add("ShutDown", "Intro:Disconnect", function()
-        if !game.SinglePlayer() then
-            http.Post("https://gmod-radio-numerix.mtxserv.com/api/disconnect.php", { script = FileSystem, ip = game.GetIPAddress() }, 
-            function(result)
-                if result then 
-                    MsgC( Color( 225, 20, 30 ), "["..AddonName.."]", Color(255,255,255), " Disconnection\n") 
-                end
-            end, 
-            function(failed)
-                MsgC( Color( 225, 20, 30 ), "["..AddonName.."]", Color(255,255,255), " Disconnection failed : "..failed.."\n")
-            end)
-        end
     end)
 end
 
